@@ -1,13 +1,4 @@
-from tkinter import *
- 
- 
-def event_info(event):
-    # print(event)
-    print(event.char)
+a=[[0,1,2,3],[4,5,6,7]]
+del a[0][0:2]
 
- 
-
-root = Tk()
-root.bind('a', event_info)
-root.bind('1', event_info)
-root.mainloop()
+print(a)
