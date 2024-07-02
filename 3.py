@@ -1,4 +1,8 @@
-a=[[0,1,2,3],[4,5,6,7]]
-del a[0][0:2]
+import sys
+import time
 
-print(a)
+import numpy as np
+a=[[1],[2]]
+b=[[3],[4]]
+a.extend(b)
+print(a[-1:])

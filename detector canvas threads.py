@@ -7,7 +7,7 @@ from PIL import Image, ImageTk
 import cv2 as cv2
 import time
 from threading import Thread
-
+from multiprocessing import Process
 import imageio.v3 as iio
 
 
@@ -21,30 +21,6 @@ pos=(294, 570, 474, 750)
 #нужно чтобы fullhd в hd перемасштабировать
 pos_rs=list(np.array(pos)/1.5)
 root = tk.Tk()
-
-
-
-def upd_graph(event):
-    global pereris
-    #[y0:y1,x0:x1,chanel
-    colors[0].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],0]))
-    colors[1].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],1]))
-    colors[2].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],2]))
-    del colors[0][0]
-    del colors[1][0]
-    del colors[2][0]
-    ax.clear()
-    ax.plot(x1,colors[0], c='tab:red')
-    ax.plot(x1,colors[1], c='tab:green')
-    ax.plot(x1,colors[2], c='tab:blue')
-    ax.set_ylim(0,255)
-    fig.draw_idle()
-    pereris= False
-
-
-
-root.bind("<<event1>>",upd_graph)
-
 
 figure1 = plt.Figure(figsize=(3, 5), dpi=150)
 
@@ -61,36 +37,90 @@ flag=False
 
 size=150
 colors=[[0]*size,[0]*size,[0]*size]
-
+s=0
 pereris=False
+pereris2=False
+new_frame=False
 q=time.time()
+img = 0
+mas=[]
 def video_capture():
     global pereris
+    global pereris2
     global frame
+    global s
     global q
+    global new_frame
     frame=next(vid)
-    # frame2=frame[pos[1]:pos[3],pos[0]:pos[2]]
-    # img = ImageTk.PhotoImage(Image.fromarray(frame2))
-    # img = ImageTk.PhotoImage(Image.fromarray(frame))
-    img = Image.fromarray(frame)
-    ri=img.resize((1280,720))
-    img=ImageTk.PhotoImage(ri)
-    if not pereris:
-        pereris=True
-        root.event_generate("<<event1>>")
-    if canvas.find_all!=[]:
-        canvas.delete('image','sq')
-    canvas.create_image(0,0, image=img,anchor="nw",tags='image')
-    canvas.create_rectangle(pos_rs, tags='sq')
-    canvas.image = img
+    # if new_frame==False and pereris==False:
+    #     new_frame=True
+    #     pereris=True
+    #     root.after_idle(upd_can)
+    #     root.after_idle(upd_graf)
+    # pereris=True
+    # if not pereris:
+    #     pereris=True 
+        
+    # if not pereris2:
+    #     pereris2=True 
+    #     t2=Thread(target=upd_graf,daemon=True).start()
+
     print((time.time()-q))
     q=time.time()
-    canvas.after(1,video_capture)
+    root.after(1,video_capture)
+   
+    
+    
+qqq=0
+
+def upd_can():
+    global new_frame
+    if canvas.find_all!=[]:
+        canvas.delete('image','sq')
+    img = ImageTk.PhotoImage(Image.fromarray(frame))
+    img = Image.fromarray(frame)
+    # ri=img.resize((1280,720))
+    img=ImageTk.PhotoImage(img)
+    canvas.create_image(0,0, image=img,anchor="nw",tags='image')
+    canvas.create_rectangle(pos_rs, tags='sq')
+    canvas.image=img
+    new_frame=False
+    root.after(30,upd_can)
+
+
     
 
 
 
 x1=np.arange(size)
+def upd_graf():
+    global pereris
+    while True:
+    # colors[0].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],0]))
+    # colors[1].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],1]))
+    # colors[2].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],2]))
+        colors[0].append(np.random.randint(0,100))
+        colors[1].append(np.random.randint(0,100))
+        colors[2].append(np.random.randint(0,100))
+        del colors[0][0]
+        del colors[1][0]
+        del colors[2][0]
+        ax.clear()
+        ax.plot(x1,colors[0], c='tab:red')
+        ax.plot(x1,colors[1], c='tab:green')
+        ax.plot(x1,colors[2], c='tab:blue')
+        ax.set_ylim(0,255)
+        print("upd graf")
+        fig.draw_idle()
+        time.sleep(0.03)
+
+def a1():
+    th1=Thread(target=upd_graf,daemon=True).start()
+
+def a2():
+    th2=Thread(target=upd_can,daemon=True).start()
+
+
 
 
 
@@ -119,6 +149,9 @@ def move(event):
 
 for i in ('<Up>','<Down>','<Left>','<Right>','<m>','<b>'):
     root.bind(i,move)
+
 root.after(10,video_capture)
+root.after(15,a1)
+root.after(25,a2)
 root.mainloop()
 

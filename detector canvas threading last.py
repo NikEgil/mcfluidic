@@ -14,12 +14,14 @@ import imageio.v3 as iio
 
 # vid = imageio.get_reader('<video0>')
 
-vid = iio.imiter("<video1>")
+vid = iio.imiter("<video0>")
 frame=0
-a=time.time()
-ct=time.time()
+
 #(x0,y0,x1,y1)
-pos=(100,100,300,300)
+pos=(152, 307, 248, 403)
+pos_rs=list(np.array(pos)/1.5)
+
+
 root = tk.Tk()
 figure1 = plt.Figure(figsize=(6, 5), dpi=100)
 
@@ -34,54 +36,76 @@ canvas.pack()
 flag=False
 
 stack=[]
-stack_size=30
+stack_size=300
 count=0
 st=time.time()
-
+img=0
 def video_capture():
     global stack
     global count
     global st
     global stack_size
+    global frame
     frame=next(vid)
-    img = ImageTk.PhotoImage(Image.fromarray(frame))
-
-    if canvas.find_all!=[]:
-        canvas.delete('image','sq')
-    canvas.create_image(0, 0, image=img, anchor="nw",tags='image')
-    canvas.create_rectangle(pos, tags='sq')
-    canvas.image = img
-
-
     stack.append(frame)
     count+=1
-    dt= time.time()-st
-    if count>1:
+    if count==10: 
+        dt= time.time()-st
         print(count/dt)
         st=time.time()
         stack_size=count
         count=0
-        canvas.event_generate("<<event>>")
+        root.event_generate("<<event>>")
         stack=[]
-    #upd_graph()
-    canvas.after(1,video_capture)
+    root.after_idle(video_capture)
+
+
+def a1():
+    Thread(target=upd_can,daemon=True).start()
+
+def upd_can():
+    s=0
+    while True:
+        img1=Image.fromarray(frame)
+        ri=img1.resize((1280,720))
+        img=ImageTk.PhotoImage(ri)
+        # img = ImageTk.PhotoImage(Image.fromarray(frame))
+        if s==50:
+            canvas.delete('image','sq','text')
+            s=0
+            print("del")
+        canvas.create_image(0, 0, image=img, anchor="nw",tags='image')
+        canvas.create_rectangle(pos_rs, tags='sq')
+        canvas.create_text(20,20,fill='white', font=('16'), text=s,tags='text')
+        s+=1
+        
+        
 
 
 
-
-size=300
+size=200
+h=size-5
 colors=[[0]*size,[0]*size,[0]*size]
 x1=np.arange(size)
+a=0
 def upd_graph(event):
     global stack
     global pos
     global flag
+    global a
     flag=True
     #[y0:y1,x0:x1,chanel]
+    
+    
     for frame in stack:
-        colors[0].append(np.average(frame[pos[0]:pos[2],pos[1]:pos[3],0]))
-        colors[1].append(np.average(frame[pos[0]:pos[2],pos[1]:pos[3],1]))
-        colors[2].append(np.average(frame[pos[0]:pos[2],pos[1]:pos[3],2]))
+        colors[0].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],0]))
+        colors[1].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],1]))
+        colors[2].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],2])) 
+    c=colors[-stack_size:]
+    if a<5:
+        print(c)
+        save(c)
+        a+=1
     del colors[0][0:stack_size]
     del colors[1][0:stack_size]
     del colors[2][0:stack_size]
@@ -89,14 +113,24 @@ def upd_graph(event):
     ax.plot(x1,colors[0], c='tab:red')
     ax.plot(x1,colors[1], c='tab:green')
     ax.plot(x1,colors[2], c='tab:blue')
+    ax.scatter(size/2,240,s=200,color=(colors[0][h]/255,colors[1][h]/255,colors[2][h]/255))
     ax.set_ylim(0,255)
     fig.draw_idle()
     flag=False
 
 
+def save(mas):
+    print(mas)
+    with open(r"q.txt", "a") as file:
+        for  line in mas:
+            file.write(line + '\n')
+
+
+
 
 def move(event):
     global pos
+    global pos_rs
     print(event.keysym)
     shift=5
     size=2
@@ -113,10 +147,13 @@ def move(event):
     if event.keysym=="Down":
         pos=(pos[0],pos[1]+shift,pos[2],pos[3]+shift) 
     print(pos,pos[2]-pos[0])
+    pos_rs=list(np.array(pos)/1.5)
+
 
 root.bind("<<event>>",upd_graph)
 for i in ('<Up>','<Down>','<Left>','<Right>','<m>','<b>'):
     root.bind(i,move)
-root.after(10,video_capture)
+root.after(1,video_capture)
+root.after(150,a1)
 root.mainloop()
 
