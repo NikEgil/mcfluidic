@@ -40,23 +40,34 @@ stack_size=300
 count=0
 st=time.time()
 img=0
+ct=time.time()
 def video_capture():
     global stack
     global count
     global st
+    global ct
     global stack_size
     global frame
+    # st=time.time()
     frame=next(vid)
     stack.append(frame)
     count+=1
-    if count==10: 
-        dt= time.time()-st
+    if time.time()-ct>1: 
+        dt= time.time()-ct
         print(count/dt)
-        st=time.time()
+        print(count)
+        ct=time.time()
         stack_size=count
         count=0
         root.event_generate("<<event>>")
         stack=[]
+    # ms=time.time()-st 
+    # if ms<0.01:
+    #     ms=10-ms*1000
+    #     ms=int(ms)
+    #     # print(st, ms)
+    # else:
+    #     ms=1
     root.after_idle(video_capture)
 
 
@@ -86,34 +97,29 @@ def upd_can():
 size=200
 h=size-5
 colors=[[0]*size,[0]*size,[0]*size]
-x1=np.arange(size)
+
 a=0
 def upd_graph(event):
     global stack
     global pos
     global flag
     global a
-    flag=True
+    colors=[[],[],[]]
+    x1=np.arange(stack_size)
     #[y0:y1,x0:x1,chanel]
-    
-    
     for frame in stack:
         colors[0].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],0]))
         colors[1].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],1]))
         colors[2].append(np.average(frame[pos[1]:pos[3],pos[0]:pos[2],2])) 
     c=colors[-stack_size:]
-    if a<5:
-        print(c)
-        save(c)
-        a+=1
-    del colors[0][0:stack_size]
-    del colors[1][0:stack_size]
-    del colors[2][0:stack_size]
+    # del colors[0][0:stack_size]
+    # del colors[1][0:stack_size]
+    # del colors[2][0:stack_size]
     ax.clear()
     ax.plot(x1,colors[0], c='tab:red')
     ax.plot(x1,colors[1], c='tab:green')
     ax.plot(x1,colors[2], c='tab:blue')
-    ax.scatter(size/2,240,s=200,color=(colors[0][h]/255,colors[1][h]/255,colors[2][h]/255))
+    # ax.scatter(stack_size/2,240,s=200,color=(colors[0][stack_size]/255,colors[1][stack_size]/255,colors[2][stack_size]/255))
     ax.set_ylim(0,255)
     fig.draw_idle()
     flag=False
